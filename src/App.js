@@ -7,6 +7,8 @@ import { Switch, Route } from 'react-router-dom';
 import Login from './Login';
 import SignUp from './SignUp';
 import Home from './Home';
+import Search_Contacts from './Search_Contacts';
+import About from './About';
 
 
 class App extends Component {
@@ -19,6 +21,8 @@ class App extends Component {
                         <Route exact path='/' component={Login}/>
                         <Route path='/signup' component={SignUp}/>
                         <Route path='/home' component={Home}/>
+                        <Route path='/search_contacts' component={Search_Contacts}/>
+                        <Route path='/about' component={About}/>
                     </Switch>
                 </div>
             </MuiThemeProvider>

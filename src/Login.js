@@ -7,6 +7,9 @@ import TextField from 'material-ui/TextField';
 import './App.css';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import {FontIcon, RaisedButton} from "material-ui";
+import Dialog from 'material-ui/Dialog';
+import FlatButton from 'material-ui/FlatButton';
+import LoaderComponent from './LoaderComponent';
 import RefreshIndicator from 'material-ui/RefreshIndicator';
 import helper from './util/helper';
 
@@ -42,10 +45,15 @@ class Login extends Component {
         this.state = {
             splashScreen: false,
             loadingStatus: "hide",
+            emailNotEntered:false,
         };
 
         //this.handleGoogleLogin = this.handleGoogleLogin.bind(this);
     }
+    handleClose = () => {
+        this.setState({emailNotEntered: false});
+        this.props.history.push("/");
+    };
 
     componentWillMount() {
 
@@ -62,7 +70,12 @@ class Login extends Component {
             password: document.getElementById("password").value
         };
         if(obj.email == "" || obj.password == ""){
-            alert("Please Enter Email and Password!");
+            //alert("Please Enter Email and Password!");
+            this.setState({
+                emailNotEntered: true,
+                dialogHeader: "We are Sorry!",
+                dialogMessage: "Please Enter Email and Password!"
+            });
             return;
         }
         this.setState({
@@ -81,8 +94,22 @@ class Login extends Component {
         });
     };
     render() {
+        const actions = [
+            <FlatButton
+                label="Cancel"
+                primary={true}
+                onClick={this.handleClose}
+            />,
+        ];
         return (
             <div style={contentStyle}>
+                {
+                    this.state.loadingStatus === "loading"
+                        ?
+                        <LoaderComponent status={this.state.loadingStatus}/>
+                        :
+                        ""
+                }
                 <h1 style={loginStyle}>Login</h1>
 
                 <MuiThemeProvider>
@@ -115,14 +142,22 @@ class Login extends Component {
                         />
                     </form>
                 </MuiThemeProvider>
-                <RefreshIndicator
-                    size={50}
-                    left={200}
-                    top={50}
-                    loadingColor="#FF9800"
-                    status={this.state.loadingStatus}
-                    style={style.refresh}
-                />
+                <Dialog
+                    title={this.state.dialogHeader}
+                    actions={actions}
+                    modal={true}
+                    open={this.state.emailNotEntered}
+                >
+                    {this.state.dialogMessage}
+                </Dialog>
+                {/*<RefreshIndicator*/}
+                    {/*size={50}*/}
+                    {/*left={200}*/}
+                    {/*top={50}*/}
+                    {/*loadingColor="#FF9800"*/}
+                    {/*status={this.state.loadingStatus}*/}
+                    {/*style={style.refresh}*/}
+                {/*/>*/}
             </div>
         );
     }

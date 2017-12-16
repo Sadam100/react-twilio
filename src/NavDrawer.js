@@ -7,7 +7,11 @@ import Drawer from 'material-ui/Drawer';
 import { Link } from 'react-router-dom';
 import {List, ListItem} from 'material-ui/List';
 import FontIcon from 'material-ui/FontIcon';
+import HomeIcon from 'material-ui/svg-icons/action/home';
+import SearchIcon from 'material-ui/svg-icons/action/search';
+import InfoIcon from 'material-ui/svg-icons/action/info';
 import FlatButton from 'material-ui/FlatButton';
+import MenuItem from 'material-ui/MenuItem';
 const appTokenKey = "appToken";
 const iconStyles = {
     marginRight: 24,
@@ -16,10 +20,10 @@ const iconStyles = {
 class NavDrawer extends Component {
     constructor(props){
         super(props);
-        console.log(this.props);
         this.state = {
             drawerOpened:false,
-            logged: true
+            logged: true,
+            title:this.props.title,
         };
         this.handleLogout = this.handleLogout.bind(this);
     };
@@ -30,25 +34,27 @@ class NavDrawer extends Component {
         console.log("user signed out from messagingApp");
 
     };
+    Navigate(link){
+        this.props.func.history.push(link);
+    }
     _toggleDrawer() {
         this.setState({
             drawerOpened: !this.state.drawerOpened
         });
     };
     render () {
+
         return(
             <div>
                 <AppBar
-                    title="Home"
+                    title={this.state.title}
                     onLeftIconButtonTouchTap={() => this._toggleDrawer()}
                     iconElementRight={<FlatButton label="Sign Out" onClick={this.handleLogout} />}
                 />
                 <Drawer open={this.state.drawerOpened} docked={false} onRequestChange={() => this._toggleDrawer()}>
-                    <List>
-                        <ListItem leftIcon={<FontIcon className="muidocs-icon-action-home" style={iconStyles}/>}><Link to='/'>Home</Link></ListItem>
-                        <ListItem leftIcon={<FontIcon className="muidocs-icon-action-home" style={iconStyles}/>}><Link to='/blog'>Friend Search</Link></ListItem>
-                        <ListItem leftIcon={<FontIcon className="muidocs-icon-action-home" style={iconStyles}/>}><Link to='/about'>About</Link></ListItem>
-                    </List>
+                        <MenuItem leftIcon={<HomeIcon color="black"/>} onClick={link => this.Navigate("/")}>Home</MenuItem>
+                        <MenuItem leftIcon={<SearchIcon color="black"/>} onClick={link => this.Navigate('/search_contacts')}>Search Contacts</MenuItem>
+                        <MenuItem leftIcon={<InfoIcon color="black"/>} onClick={link => this.Navigate('/about')}>About</MenuItem>
                 </Drawer>
             </div>
         );

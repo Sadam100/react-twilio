@@ -12,6 +12,7 @@ import Dialog from 'material-ui/Dialog';
 import IconButton from 'material-ui/IconButton';
 import helper from './util/helper';
 const appTokenKey = "appToken";
+const CLOUDINARY_UPLOAD_PRESET = 'woa1ui5l';
 const textFieldStyle = {
     display: 'block',
     width: '100%'
@@ -108,37 +109,43 @@ class SignUp extends Component {
             alert("Please Upload Image!");
             return;
         }
-        var image64baseStr = "";
+        var file = this.state.file;
+        var email = document.getElementById("email").value;
+        var password = document.getElementById("password").value;
+        if(email === "" || password === ""){
+            alert("Please Enter Email and Password!");
+            return;
+        }
         var that = this;
         var reader = new FileReader();
         this.setState({
             loadingStatus: "loading",
             loadingDialogOpen: true,
         });
-        try{
-            reader.readAsDataURL(this.state.file);
-            reader.onload = function () {
-                image64baseStr = reader.result;
-                var userObj = {
-                    full_name: document.getElementById("fullname").value,
-                    email: document.getElementById("email").value,
-                    password: document.getElementById("password").value,
-                    contact: document.getElementById("contact").value,
-                    image: image64baseStr
-                };
-                console.log(userObj);
-                var promiseObj = helper.addUser(userObj);
-                promiseObj.then(function(data){
-                    console.log("50 ",data);
-                    var token = data.data.token;
-                    var udata = data.data.user;
-                    localStorage.setItem(appTokenKey, token);
-                    localStorage.setItem("current-user", JSON.stringify(udata));
-                    that.props.history.push("/home");
-                });
+        var formData = new FormData();
+        formData.append("file", file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        var promiseObj = helper.uploadImage(formData);
+        promiseObj.then(function(data){
+            console.log("134 ",data.data);
+            var userObj = {
+                full_name: document.getElementById("fullname").value,
+                email: email,
+                password: password,
+                contact: document.getElementById("contact").value,
+                image: data.data.secure_url,
             };
-        }catch (e){image64baseStr = null;}
-
+            console.log("142 ",userObj);
+            var promiseUser = helper.addUser(userObj);
+            promiseUser.then(function(data){
+                console.log("50 ",data);
+                var token = data.data.token;
+                var udata = data.data.user;
+                localStorage.setItem(appTokenKey, token);
+                localStorage.setItem("current-user", JSON.stringify(udata));
+                that.props.history.push("/home");
+            });
+        });
     };
 
     render() {

@@ -14,9 +14,11 @@ import FlatButton from 'material-ui/FlatButton';
 import TextField from 'material-ui/TextField';
 import RefreshIndicator from 'material-ui/RefreshIndicator';
 import Checkbox from 'material-ui/Checkbox';
+import CallIcon from 'material-ui/svg-icons/action/thumb-up';
 import {FontIcon, RaisedButton} from "material-ui";
 import Dialog from 'material-ui/Dialog';
 import helper from './util/helper';
+import LoaderComponent from './LoaderComponent';
 const appTokenKey = "appToken";
 const iconStyles = {
     marginRight: 24,
@@ -26,10 +28,10 @@ const contentStyle = {
 };
 const rightDivStyle = {
     float: 'right',
-    marginRight: "100px"
+    marginRight: "100px",
 };
 const leftDivStyle = {
-    width: '60%',
+    width: '50%',
     paddingLeft: '40px'
 };
 const signOutStyle = {
@@ -48,6 +50,16 @@ const customContentStyle = {
     maxWidth: 'none',
 };
 
+const dimDiv = {
+    background: 'rgba(0,0,0,.5)',
+    width: "100%",
+    height: "100%",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    zIndex: 999,
+}
+
 class Home extends Component {
     constructor(props){
         super(props);
@@ -62,20 +74,30 @@ class Home extends Component {
             props: this.props,
             loadingStatus: "loading",
             loadingDialogOpen: true,
+            title: "Home",
+            contactNotSelected: false,
         };
         this.handleLogout = this.handleLogout.bind(this);
     };
     handleClose = () => {
-        this.setState({open: false});
+        this.setState({open: false, contactNotSelected: false, sentOpen: false});
         this.props.history.push("/");
     };
+
+    homeClose = () => {
+        this.setState({open: false, contactNotSelected: false, sentOpen: false});
+    }
 
     _sendMessage = (e) => {
         e.preventDefault();
         // console.log("59 ",this.state.selectedUser[0]);
         console.log("65 ",this.state.options);
         if(!this.state.options.length){
-            alert("Please Select at least One Contact");
+            this.setState({
+                contactNotSelected: true,
+                dialogHeader: "We are Sorry!",
+                dialogMessage: "Please Select at least One Contact!"
+            });
             return;
         }
         var to = this.state.options;
@@ -166,15 +188,32 @@ class Home extends Component {
         this.setState({
             loadingStatus: "loading",
         });
+        var users=[];
         var session = localStorage.getItem(appTokenKey);
         var currentUser = JSON.parse(localStorage.getItem("current-user"));
         console.log("78 ",currentUser);
-        var promiseObj = helper.getUsers();
+        var obj ={
+            Email: currentUser.Email
+        }
+        var promiseObj = helper.getContactList(obj);
         promiseObj.then(function(data){
             console.log("124 ",data);
-            if(data){
+            if(data !== "No Contact List!"){
+                // for(var i =0;i<data.length;i++){
+                //     if(data[i].Email !== currentUser.Email){
+                //         users.push(data[i]);
+                //     }
+                // }
                 this.setState({
                     data: data,
+                    loadingStatus: "hide",
+                    loadingDialogOpen: false,
+                    currentUserName: currentUser.FullName,
+                    currentUserEmail: currentUser.Email,
+                });
+            }else{
+                this.setState({
+                    data: null,
                     loadingStatus: "hide",
                     loadingDialogOpen: false,
                     currentUserName: currentUser.FullName,
@@ -191,6 +230,13 @@ class Home extends Component {
                 onClick={this.handleClose}
             />,
         ];
+        const contactNotSelected = [
+            <FlatButton
+                label="Cancel"
+                primary={true}
+                onClick={this.homeClose}
+            />,
+        ];
         const isData = this.state.isData;
         const isSent = this.state.isSent;
         const isSession = this.state.session;
@@ -198,33 +244,31 @@ class Home extends Component {
         const currentUserEmail = this.state.currentUserEmail;
         let userData = null;
         let selectedUserBox = null;
-        userData = this.state.data.map((data, i) => {
-            return <ListItem key={i}
-                    primaryText={data.FullName}
-                    rightAvatar={<Avatar src={data.ImageData} />}
-                             leftCheckbox={<Checkbox value={data.Contact} onCheck={this.onChange.bind(this)} />}
-                             //onCheck={FullName => this.selectedUser(data.FullName)}
+        if(this.state.data){
+            userData = this.state.data.map((data, i) => {
+                return <ListItem key={i}
+                                 primaryText={data.FullName}
+                                 rightAvatar={<Avatar src={data.ImageURL} />}
+                                 leftCheckbox={<Checkbox value={data.Contact} onCheck={this.onChange.bind(this)} />}
+                    //onCheck={FullName => this.selectedUser(data.FullName)}
                 />
-        });
+            });
+        }else{
+            userData = <ListItem>No Contact List</ListItem>;
+        }
+
         if(localStorage.getItem(appTokenKey)){
             return(
                 <div>
-                    <NavDrawer func={this.state.props}/>
+                    <NavDrawer func={this.state.props} title={this.state.title}/>
                     <div style={contentStyle}>
-                        <Dialog
-                            modal={false}
-                            open={this.state.loadingDialogOpen}
-                            contentStyle={customContentStyle}
-                        >
-                            <RefreshIndicator
-                                size={50}
-                                left={-10}
-                                top={0}
-                                loadingColor="#FF9800"
-                                status={this.state.loadingStatus}
-                                style={style.refresh}
-                            />
-                        </Dialog>
+                        {
+                            this.state.loadingStatus === "loading"
+                            ?
+                                <LoaderComponent status={this.state.loadingStatus}/>
+                            :
+                                ""
+                        }
 
                         <div style={headingStyle}>
                             <h1>Messenger</h1>
@@ -232,7 +276,7 @@ class Home extends Component {
                         <div style={rightDivStyle}>
                             <MobileTearSheet>
                                 <List>
-                                    <Subheader>Recent chats</Subheader>
+                                    <Subheader>Contact List</Subheader>
                                     {userData}
                                 </List>
                             </MobileTearSheet>
@@ -263,12 +307,20 @@ class Home extends Component {
                                  </form>
                                  <Dialog
                                      title={this.state.dialogHeader}
-                                     actions={actions}
+                                     actions={contactNotSelected}
                                      modal={true}
-                                     open={this.state.sentOpen}
+                                     open={this.state.contactNotSelected}
                                  >
                                      {this.state.dialogMessage}
                                  </Dialog>
+                                <Dialog
+                                    title={this.state.dialogHeader}
+                                    actions={actions}
+                                    modal={true}
+                                    open={this.state.sentOpen}
+                                >
+                                    {this.state.dialogMessage}
+                                </Dialog>
                             </Card>
                         </div>
                     </div>
