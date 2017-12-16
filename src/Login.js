@@ -46,12 +46,13 @@ class Login extends Component {
             splashScreen: false,
             loadingStatus: "hide",
             emailNotEntered:false,
+            wrongEmail: false,
         };
 
         //this.handleGoogleLogin = this.handleGoogleLogin.bind(this);
     }
     handleClose = () => {
-        this.setState({emailNotEntered: false});
+        this.setState({emailNotEntered: false, wrongEmail: false});
         this.props.history.push("/");
     };
 
@@ -86,11 +87,24 @@ class Login extends Component {
         var promiseObj = helper.signIn(obj);
         promiseObj.then(function(data){
             console.log("50 ",data.data);
-            var token = data.data.token;
-            var udata = data.data.user;
-            localStorage.setItem(appTokenKey, token);
-            localStorage.setItem("current-user", JSON.stringify(udata));
-            that.props.history.push("/home");
+            if(data.data.success){
+                var token = data.data.token;
+                var udata = data.data.user;
+                localStorage.setItem(appTokenKey, token);
+                localStorage.setItem("current-user", JSON.stringify(udata));
+                that.props.history.push("/home");
+            }else{
+                console.log(data.data.msg);
+                that.setState({
+                    wrongEmail: true,
+                    dialogHeader: "We are Sorry!",
+                    dialogMessage: data.data.msg,
+                    loadingStatus: "hide"
+                });
+                document.getElementById("email").value="";
+                document.getElementById("password").value="";
+            }
+
         });
     };
     render() {
@@ -146,7 +160,7 @@ class Login extends Component {
                     title={this.state.dialogHeader}
                     actions={actions}
                     modal={true}
-                    open={this.state.emailNotEntered}
+                    open={this.state.emailNotEntered || this.state.wrongEmail}
                 >
                     {this.state.dialogMessage}
                 </Dialog>
